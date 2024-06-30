@@ -6,12 +6,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 
 const char * vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 0) in vec2 aPos;\n"
     "void main()\n"
     "{\n"
-    "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
     "}\0";
 
 const char * fragmentShaderSource = "#version 330 core\n"
@@ -54,7 +55,12 @@ int main()
     glewExperimental = GL_TRUE; 
     glewInit();
 
-    float vertices[] = {-0.5,-0.5,0.0, 0.5,-0.5,0.0,0.0,0.5,0.0};
+    float vertices[] = {
+	0.5, 0.5,
+	0.5, -0.5,
+	-0.5,-0.5,
+	-0.5,0.5
+    };
     unsigned int ind[] = {0,1,2};
    
     //tell gl to generate vertex arrays and bind them
@@ -94,25 +100,57 @@ int main()
     glDeleteShader(fragmentShader);
     
     //final step here: Make the gpu interpret the shader program in a meaningful way!
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,2*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
 
 
+
+
+    
+    //tell gl to generate vertex arrays and bind them
+    unsigned int VAO2;
+    glGenVertexArrays(1,&VAO2);
+    glBindVertexArray(VAO2);
+     
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(0);
+
+    //what has this taught me:
+    //The VAO stores how the vertex arrays should be interpreted
+    //once you hit glBindVertexArray and vertex attribPointers and vertexAtrribArrays are bound to that vao
+    //you can call the vao to load these changes 
+    //The question is why that shit is even slightly usefull to be honest
+
+    int c = 0;
+
     while(!glfwWindowShouldClose(window)) {
+
 	processInput(window);
 	
 	glClearColor(0.2f, 0.5f, 0.1f, 0.5f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	glUseProgram(shaderProgram);
-	glBindVertexArray(VAO);
+
+	if (c%2 == 0) {
+	    glBindVertexArray(VAO);
+	} else {
+	    glBindVertexArray(VAO2);
+	}
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents(); //this seems to be an issue with wayland 
+	sleep(1);
 
+	vertices[0] = sin(vertices[0])+0.1;
+	vertices[1] = sin(vertices[2])-0.1;
+	vertices[2] = sin(vertices[2])+0.2;
+	glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW); //note that GL_STATIC_DRAW means that this is not expected to change much
+	c ++ ; 
     }
     
     glfwTerminate();

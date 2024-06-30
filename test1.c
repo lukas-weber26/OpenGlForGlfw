@@ -54,8 +54,13 @@ int main()
     glewExperimental = GL_TRUE; 
     glewInit();
 
-    float vertices[] = {-0.5,-0.5,0.0, 0.5,-0.5,0.0,0.0,0.5,0.0};
-    unsigned int ind[] = {0,1,2};
+    float vertices[] = {
+	0.5, 0.5,0.0,
+	0.5, -0.5, 0.0,
+	-0.5,-0.5,0.0,
+	-0.5,0.5, 0.0
+    };
+    unsigned int ind[] = {0,1,3, 1,2,3};
    
     //tell gl to generate vertex arrays and bind them
     unsigned int VAO;
@@ -107,7 +112,7 @@ int main()
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 	glfwSwapBuffers(window);
